@@ -1,4 +1,4 @@
-#include "instruction.h"
+#include "instruction.c"
 
 #ifndef STAGE_ENUM
 #define STAGE_ENUM

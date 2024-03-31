@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "instruction.h"
+#include "instruction.c"
 
 typedef struct {
     Instruction instr;
