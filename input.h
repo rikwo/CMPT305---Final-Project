@@ -8,9 +8,9 @@
 
 #include "instruction.c"
 
-typedef struct {
+typedef struct queueNode {
     Instruction instr;
-    struct QueueNode* next;
+    struct queueNode* next;
 } QueueNode;
 
 typedef struct {
@@ -28,7 +28,7 @@ void populateQueue(InstructionQueue *queue, const char* fileName, int startLine,
 void pop(InstructionQueue* queue);
 
 //function to get the front instruction
-InstructionQueue getFront(const InstructionQueue* queue);
+Instruction getFront(const InstructionQueue* queue);
 
 //function to check if queue is empty
 bool isEmpty(const InstructionQueue queue);

@@ -5,7 +5,7 @@
 #include "events.h"
 #include "input.h"
 
-typedef struct {
+typedef struct EventListNode {
     Event event;
     struct EventListNode* next;
 } EventListNode;
@@ -18,7 +18,7 @@ typedef struct {
 
 EventList* initEventList(DependencyTracker* dependencyTracker, InstructionQueue* instructionQueue, int width);
 
-void pop(EventList* eventList);
+void popEvent(EventList* eventList);
 
 Event front(const EventList* eventList);
 

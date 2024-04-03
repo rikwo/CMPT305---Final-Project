@@ -12,7 +12,7 @@ typedef struct {
     bool second;
 } Pair;
 
-typedef struct {
+typedef struct DequeNode{
     Pair pair;
     struct DequeNode* next;
 } DequeNode;

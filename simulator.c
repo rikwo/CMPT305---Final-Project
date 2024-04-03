@@ -6,7 +6,7 @@
 
 #include "input.h"
 #include "dependency.h"
-#include "eventlist.h"
+#include "eventlist_s.c"
 
 typedef struct {
     const char* fileName; //name of the trace file
@@ -87,25 +87,25 @@ void start(Simulator* simulator) {
 
             switch (current.stage) {
                 case IF:
-                    processIF(eventList);
+                    processIF(dependencyTracker, simulator->width, eventList);
                     break;
                 case ID:
-                    processID(eventList);
+                    processID(dependencyTracker, simulator->width, eventList);
                     break;
                 case EX:
-                    processEX(eventList);
+                    processEX(dependencyTracker, simulator->width, eventList);
                     break;
                 case MEM:
-                    processMEM(eventList);
+                    processMEM(dependencyTracker, simulator->width, eventList);
                 case WB:
-                    processWB(eventList);
+                    processWB(dependencyTracker, simulator->width, eventList);
 
-                    instructionCount[current.instr.type - 1]++;
+                    simulator->instructionCount[current.instr.type - 1]++;
                     simulator->instructionsExecuted++;
                     break;
 
             }
-            pop(eventList);
+            popEvent(eventList);
         }
         fetch(eventList, instructionQueue);
         simulator->clockCycle++;

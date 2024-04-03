@@ -14,7 +14,7 @@ typedef enum {
 }instrType;
 
 //structure representing instructions
-typedef struct {
+typedef struct Instruction {
     char* programCounter; //hexadecimal value representing the isntruction address
     instrType type; //type of instruction
     char** dependents; //list of program counter values that the current instruction is dependent on

@@ -1,4 +1,4 @@
-#include "inputqueue.h"
+#include "input.h"
 
 // Function to initialize a queue
 InstructionQueue* initQueue() {
