@@ -22,7 +22,7 @@ typedef struct {
 InstructionQueue* initQueue();
 
 //function to populate a queue with instruction from input file
-void populateQueue(InstructionQueue queue, const char* fileName, int startLine, int instrCount);
+void populateQueue(InstructionQueue *queue, const char* fileName, int startLine, int instrCount);
 
 //function to remove the front instruction
 void pop(InstructionQueue* queue);

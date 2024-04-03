@@ -13,7 +13,10 @@ typedef struct {
 typedef struct {
     EventListNode* head;
     EventListNode* tail;
+    int size;
 } EventList;
+
+EventList* initEventList(DependencyTracker* dependencyTracker, InstructionQueue* instructionQueue, int width);
 
 void pop(EventList* eventList);
 
