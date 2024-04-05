@@ -87,7 +87,7 @@ void fetch(EventList* eventList, InstructionQueue* queue) {
 
 
 
-void processIF(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
+void processIF(DependencyTracker* dependencyTracker, unsigned width, EventList* eventList) {
     /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
@@ -145,7 +145,7 @@ void processIF(DependencyTracker* dependencyTracker, int width, EventList* event
     free(temp);
 }
 
-void processID(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
+void processID(DependencyTracker* dependencyTracker, unsigned int width, EventList* eventList) {
     /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
@@ -169,9 +169,9 @@ void processID(DependencyTracker* dependencyTracker, int width, EventList* event
 
     Instruction instruction = eventList->head->event.instr;
 
-    for (int i = 0; i < instruction.num_dependents; i++) {
+    for (size_t i = 0; i < instruction.num_dependents; i++) {
         char key[20];
-        sprintf(key, '%d', instruction.dependents[i]);
+        sprintf(key, "%s", instruction.dependents[i]);
         Deque* dependencyDeque = get(dependencyTracker->instructions, key);
         if (dependencyDeque != NULL) {
             DequeNode* search = dependencyDeque->front;
@@ -255,7 +255,7 @@ void processID(DependencyTracker* dependencyTracker, int width, EventList* event
     dependencyTracker->nextInstr[ID]++;
 }
 
-void processEX(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
+void processEX(DependencyTracker* dependencyTracker, unsigned int width, EventList* eventList) {
     /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
@@ -282,7 +282,7 @@ void processEX(DependencyTracker* dependencyTracker, int width, EventList* event
         }
 
         char key[20];
-        sprintf(key, '%d', instruction.programCounter);
+        sprintf(key, "%s", instruction.programCounter);
         Deque* dependencyDeque = get(dependencyTracker->instructions, key);
         if (dependencyDeque != NULL) {
             DequeNode* search = dependencyDeque->front;
@@ -348,7 +348,7 @@ void processEX(DependencyTracker* dependencyTracker, int width, EventList* event
     dependencyTracker->nextInstr[EX]++;
 }
 
-void processMEM(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
+void processMEM(DependencyTracker* dependencyTracker, unsigned int width, EventList* eventList) {
     /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
@@ -374,7 +374,7 @@ void processMEM(DependencyTracker* dependencyTracker, int width, EventList* even
         }
 
         char key[20];
-        sprintf(key, '%d', instruction.programCounter);
+        sprintf(key, "%s", instruction.programCounter);
         Deque* depedencyDeque = get(dependencyTracker->instructions, key);
         if (depedencyDeque != NULL) {
             DequeNode* search = depedencyDeque->front;
@@ -422,7 +422,7 @@ void processMEM(DependencyTracker* dependencyTracker, int width, EventList* even
     dependencyTracker->stageCount[MEM]++;
 }
 
-void processWB(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
+void processWB(DependencyTracker* dependencyTracker, EventList* eventList) {
     /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }

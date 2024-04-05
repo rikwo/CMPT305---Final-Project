@@ -16,7 +16,7 @@ typedef struct Simulator {
     double time;
 } Simulator;
 
-Simulator* newSimulator(const char* fileName, int startLine, int expectedInstructionCount, int width);
+Simulator* newSimulator(const char* fileName, int startLine, int expectedInstructionCount, unsigned int width);
 void print(Simulator *simulator);
 void start(Simulator* simulator);
 

@@ -11,7 +11,7 @@
 #include "eventlist.h"
 
 
-Simulator* newSimulator(const char* fileName, int startLine, int expectedInstructionCount, int width) {
+Simulator* newSimulator(const char* fileName, int startLine, int expectedInstructionCount, unsigned int width) {
     Simulator* simulator = (Simulator*)malloc(sizeof(Simulator));
     if (simulator == NULL) {
         //memory allocation failed
