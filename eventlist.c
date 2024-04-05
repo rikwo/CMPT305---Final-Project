@@ -88,7 +88,7 @@ void fetch(EventList* eventList, InstructionQueue* queue) {
 
 
 void processIF(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
-    if (dependencyTracker == NULL || eventList == NULL) {
+    /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
     int count = 0;
@@ -103,11 +103,50 @@ void processIF(DependencyTracker* dependencyTracker, int width, EventList* event
         } else {
             break; // No more instructions in IF stage or pipeline width limit reached
         }
+    }*/
+
+    Instruction instruction = eventList->head->event.instr;
+
+    if (dependencyTracker->stageCount[ID] == width || dependencyTracker->nextInstr[IF] != instruction.lineNum) {
+        EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+        newNode->event = eventList->head->event;
+        newNode->next = NULL;
+        if (eventList->head == eventList->tail) {
+            eventList->head = eventList->tail = NULL;
+        }
+        else {
+            eventList->head = eventList->head->next;
+        }
+        if (eventList->size > 0) {
+            eventList->size--;
+        }
+        if (newNode != NULL) {
+            if (eventList->tail == NULL) {
+                eventList->head = eventList->tail = newNode;
+            }
+            else {
+                eventList->tail->next = newNode;
+                eventList->tail = newNode;
+            }
+            eventList->size++;
+        }
+        return;
     }
+
+    dependencyTracker->stageCount[IF]--;
+    dependencyTracker->stageCount[ID]++;
+    dependencyTracker->nextInstr[IF]++;
+
+    EventListNode* temp = eventList->head;
+    eventList->head = eventList->head->next;
+    if (eventList->size > 0) {
+        eventList->size--;
+    }
+    free(temp);
 }
 
 void processID(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
-    if (dependencyTracker == NULL || eventList == NULL) {
+    /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
     int count = 0;
@@ -122,11 +161,102 @@ void processID(DependencyTracker* dependencyTracker, int width, EventList* event
         } else {
             break; // No more instructions in ID stage or pipeline width limit reached
         }
+    }*/
+    if (eventList->head == NULL) {
+        //eventList is empty and therefore no instriction to process
+        return;
     }
+
+    Instruction instruction = eventList->head->event.instr;
+
+    for (int i = 0; i < instruction.num_dependents; i++) {
+        char key[20];
+        sprintf(key, '%d', instruction.dependents[i]);
+        Deque* dependencyDeque = get(dependencyTracker->instructions, key);
+        if (dependencyDeque != NULL) {
+            DequeNode* search = dependencyDeque->front;
+            while (search != NULL) {
+                if (search->pair.first < instruction.lineNum) {
+                    if (!search->pair.second) {
+                    EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+                    newNode->event.stage = ID;
+                    newNode->event.instr = instruction;
+                    newNode->next = NULL;
+                    if (eventList->head == eventList->tail) {
+                        eventList->head = eventList->tail = newNode;
+                    }
+                    else {
+                        eventList->tail->next = newNode;
+                        eventList->tail = newNode;
+                    }
+                    eventList->size++;
+                    return;
+                    }
+                    else {
+                        break;
+                    }
+                }
+                search = search->next;
+            }
+        }
+    }
+
+    if (dependencyTracker->stageCount[EX] == width || dependencyTracker->nextInstr[ID] != instruction.lineNum) {
+        //reschedule current instruction if EX stage is full or not next program order instruction
+        EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+        newNode->event.stage = ID;
+        newNode->event.instr = instruction;
+        newNode->next = NULL;
+        if (eventList->head == eventList->tail) {
+            eventList->head = eventList->tail = newNode;
+        }
+        else {
+            eventList->tail->next = newNode;
+            eventList->tail = newNode;
+        }
+        eventList->size++;
+        return;
+    }
+
+    if (instruction.type == Integer || instruction.type == Float) {
+        //reschedule current instruction if structural dependency not available
+        if (dependencyTracker->hazards[instruction.type - 1] != 0) {
+            EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+            newNode->event.stage = ID;
+            newNode->event.instr = instruction;
+            newNode->next = NULL;
+            if (eventList->head == eventList->tail) {
+                eventList->head = eventList->tail = newNode;
+            }
+            else {
+                eventList->tail->next = newNode;
+                eventList->tail = newNode;
+            }
+            eventList->size++;
+            return;
+        }
+        dependencyTracker->hazards[instruction.type - 1] = instruction.lineNum;
+    }
+
+    EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+    newNode->event.stage = EX;
+    newNode->event.instr = instruction;
+    newNode->next = NULL;
+    if (eventList->head == eventList->tail) {
+        eventList->head = eventList->tail = newNode;
+    }
+    else {
+        eventList->tail->next = newNode;
+        eventList->tail = newNode;
+    }
+    eventList->size++;
+    dependencyTracker->stageCount[ID]--;
+    dependencyTracker->stageCount[EX]++;
+    dependencyTracker->nextInstr[ID]++;
 }
 
 void processEX(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
-    if (dependencyTracker == NULL || eventList == NULL) {
+    /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
     int count = 0;
@@ -139,11 +269,87 @@ void processEX(DependencyTracker* dependencyTracker, int width, EventList* event
         } else {
             break; // No more instructions in EX stage or pipeline width limit reached
         }
+    }*/
+    if (eventList->head == NULL) {
+        return;
     }
+    Instruction instruction = eventList->head->event.instr;
+
+    if (instruction.type == Integer || instruction.type == Float || instruction.type == Branch) {
+        //update structural/control hazards
+        if (dependencyTracker->hazards[instruction.type - 1] == instruction.lineNum) {
+            dependencyTracker->hazards[instruction.type - 1] = 0;
+        }
+
+        char key[20];
+        sprintf(key, '%d', instruction.programCounter);
+        Deque* dependencyDeque = get(dependencyTracker->instructions, key);
+        if (dependencyDeque != NULL) {
+            DequeNode* search = dependencyDeque->front;
+            while (search != NULL) {
+                if (search->pair.first == instruction.lineNum) {
+                    search->pair.second = true;
+                    break;
+                }
+                search = search->next;
+            }
+        }
+    }
+
+    if (dependencyTracker->stageCount[MEM] == width || dependencyTracker->nextInstr[EX] != instruction.lineNum) {
+        EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+        newNode->event.stage = EX;
+        newNode->event.instr = instruction;
+        newNode->next = NULL;
+        if (eventList->head == eventList->tail) {
+            eventList->head = eventList->tail = newNode;
+        }
+        else {
+            eventList->tail->next = newNode;
+            eventList->tail = newNode;
+        }
+        eventList->size++;
+        return;
+    }
+
+    if (instruction.type == Load || instruction.type == Store) {
+        if (dependencyTracker->hazards[instruction.type - 1] != 0) {
+            EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+            newNode->event.stage = EX;
+            newNode->event.instr = instruction;
+            newNode->next = NULL;
+            if (eventList->head == eventList->tail) {
+                eventList->head = eventList->tail = newNode;
+            }
+            else {
+                eventList->tail->next = newNode;
+                eventList->tail = newNode;
+            }
+            eventList->size++;
+            return;
+        }
+        dependencyTracker->hazards[instruction.type - 1] = instruction.lineNum;
+    }
+    EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+    newNode->event.stage = MEM;
+    newNode->event.instr = instruction;
+    newNode->next = NULL;
+    if (eventList->head == eventList->tail) {
+        eventList->head = eventList->tail = newNode;
+    }
+    else {
+        eventList->tail->next = newNode;
+        eventList->tail = newNode;
+    }
+    eventList->size++;
+
+    dependencyTracker->stageCount[EX]--;
+    dependencyTracker->stageCount[MEM]++;
+    dependencyTracker->nextInstr[EX]++;
 }
 
 void processMEM(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
-    if (dependencyTracker == NULL || eventList == NULL) {
+    /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
     int count = 0;
@@ -156,11 +362,68 @@ void processMEM(DependencyTracker* dependencyTracker, int width, EventList* even
         } else {
             break; // No more instructions in MEM stage or pipeline width limit reached
         }
+    }*/
+    if (eventList->head == NULL) {
+        return;
     }
+    Instruction instruction = eventList->head->event.instr;
+
+    if (instruction.type == Load || instruction.type == Store) {
+        if (dependencyTracker->hazards[instruction.type - 1] == instruction.lineNum) {
+            dependencyTracker->hazards[instruction.type - 1] = 0;
+        }
+
+        char key[20];
+        sprintf(key, '%d', instruction.programCounter);
+        Deque* depedencyDeque = get(dependencyTracker->instructions, key);
+        if (depedencyDeque != NULL) {
+            DequeNode* search = depedencyDeque->front;
+            while (search != NULL) {
+                if (search->pair.first == instruction.lineNum) {
+                    search->pair.second = true;
+                    break;
+                }
+                search = search->next;
+            }
+        }
+    }
+
+    if (dependencyTracker->stageCount[WB] == width || dependencyTracker->nextInstr[MEM] != instruction.lineNum) {
+        EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+        newNode->event.stage = MEM;
+        newNode->event.instr = instruction;
+        newNode->next = NULL;
+        if (eventList->head == eventList->tail) {
+            eventList->head = eventList->tail = newNode;
+        }
+        else {
+            eventList->tail->next = newNode;
+            eventList->tail = newNode;
+        }
+        eventList->size++;
+        return;
+    }
+
+    EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+    newNode->event.stage = WB;
+    newNode->event.instr = instruction;
+    newNode->next = NULL;
+    if (eventList->head == eventList->tail) {
+        eventList->head = eventList->tail = newNode;
+    }
+    else {
+        eventList->tail->next = newNode;
+        eventList->tail = newNode;
+    }
+    eventList->size++;
+
+    dependencyTracker->stageCount[MEM]--;
+    dependencyTracker->stageCount[WB]++;
+    dependencyTracker->stageCount[MEM]++;
 }
 
 void processWB(DependencyTracker* dependencyTracker, int width, EventList* eventList) {
-    if (dependencyTracker == NULL || eventList == NULL) {
+    /*if (dependencyTracker == NULL || eventList == NULL) {
         return;
     }
     int count = 0;
@@ -173,7 +436,29 @@ void processWB(DependencyTracker* dependencyTracker, int width, EventList* event
         } else {
             break; // No more instructions in WB stage or pipeline width limit reached
         }
+    }*/
+    if (eventList->head == NULL) {
+        return;
     }
+
+    Instruction instruction = eventList->head->event.instr;
+    if (dependencyTracker->nextInstr[WB] != instruction.lineNum) {
+        EventListNode* newNode = (EventListNode*)malloc(sizeof(EventListNode));
+        newNode->event.stage = WB;
+        newNode->event.instr = instruction;
+        newNode->next = NULL;
+        if (eventList->head == eventList->tail) {
+            eventList->head = eventList->tail = newNode;
+        }
+        else {
+            eventList->tail->next = newNode;
+            eventList->tail = newNode;
+        }
+        eventList->size++;
+        return;
+    }
+    dependencyTracker->stageCount[WB]--;
+    dependencyTracker->nextInstr[WB]++;
 }
 
 
