@@ -97,11 +97,14 @@ void start(Simulator* simulator) {
             switch (current.stage) {
                 case IF:
                     processIF(dependencyTracker, simulator->width, eventList);
+                    processIF(dependencyTracker, simulator->width, eventList);
                     break;
                 case ID:
                     processID(dependencyTracker, simulator->width, eventList);
+                    processID(dependencyTracker, simulator->width, eventList);
                     break;
                 case EX:
+                    processEX(dependencyTracker, simulator->width, eventList);
                     processEX(dependencyTracker, simulator->width, eventList);
                     break;
                 case MEM:
@@ -109,12 +112,15 @@ void start(Simulator* simulator) {
                     break;
                 case WB:
                     processWB(dependencyTracker, simulator->width, eventList);
+                    processWB(dependencyTracker, simulator->width, eventList);
 
+                    simulator->instructionCount[current.instr.type - 1]++;
                     simulator->instructionCount[current.instr.type - 1]++;
                     simulator->instructionsExecuted++;
                     break;
 
             }
+            popEvent(eventList);
             popEvent(eventList);
         }
         fetch(eventList, instructionQueue);
