@@ -69,7 +69,7 @@ void start(Simulator* simulator) {
     InstructionQueue *instructionQueue = initQueue();
     populateQueue(instructionQueue, simulator->fileName, simulator->startLine, simulator->expectedInstructionCount);
     // Print all instructions in the queue
-    /*printf("Instructions in the queue:\n");
+    printf("Instructions in the queue:\n");
     QueueNode* current = instructionQueue->front;
     while (current != NULL) {
         printf("PC: %s, Type: %d, Number of Dependents: %zu, Dependencies: ", 
@@ -84,13 +84,13 @@ void start(Simulator* simulator) {
         }
         printf("\n");
         current = current->next;
-    }*/
+    }
 
     DependencyTracker *dependencyTracker = newDependencyTracker();
     EventList *eventList = initEventList(dependencyTracker, instructionQueue, simulator->width);
     
     //as long as there are events and the instructions remaining, continue
-   /* while (eventList->size > 0 || (instructionQueue->front != NULL && instructionQueue->rear != NULL)) {
+    while (eventList->size > 0 || (instructionQueue->front != NULL && instructionQueue->rear != NULL)) {
         unsigned instructionCount = eventList->size;
         for (unsigned int i = 0; i < instructionCount; i++) {
             Event current = front(eventList);
@@ -125,8 +125,8 @@ void start(Simulator* simulator) {
         }
         fetch(eventList, instructionQueue);
         simulator->clockCycle++;
-    }*/
+    }
     clock_t endTime = clock();
     simulator->time = (double)(endTime - startTime)/ CLOCKS_PER_SEC;
-    //print(simulator);
+    print(simulator);
 }

@@ -26,7 +26,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error creating new simulator");
         return 1;
     }
-
     start(simulator);
     //freeSimulator(simulator);
 
