@@ -1,26 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
+#include "instruction.h"
 
-#ifndef INSTRUCTION_H
-#define INSTRUCTION_H
-
-//type of program instruction
-typedef enum {
-    Integer = 1,
-    Float = 2,
-    Branch = 3,
-    Load = 4,
-    Store = 5
-}instrType;
-
-//structure representing instructions
-typedef struct {
-    char* programCounter; //hexadecimal value representing the isntruction address
-    instrType type; //type of instruction
-    char** dependents; //list of program counter values that the current instruction is dependent on
-    size_t num_dependents; //number of dependents
-    unsigned lineNum; //line number of the associated instruction
-} Instruction;
 
 Instruction* newInstruction(const char* programCounter, instrType type, const char** dependents, size_t num_dependents, unsigned lineNum) {
     //create new instruction
@@ -84,4 +65,3 @@ void freeInstruction(Instruction* instr) {
     free(instr->dependents);
     free(instr);
 }
-#endif

@@ -3,7 +3,38 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-void pop(EventList* eventList) {
+Event newEvent(Stage stage, Instruction instr) {
+    Event event;
+    event.stage = stage;
+    event.instr = instr;
+    return event;
+}
+EventList* initEventList(DependencyTracker* dependencyTracker, InstructionQueue* instructionQueue, int width) {
+    if (dependencyTracker == NULL || instructionQueue == NULL || width <= 0) {
+        return NULL;
+    }
+    
+    EventList* eventList = malloc(sizeof(EventList));
+    if (eventList == NULL) {
+        // Memory allocation failed
+        return NULL;
+    }
+    
+    eventList->head = NULL;
+    eventList->tail = NULL;
+    eventList->size = 0;
+    
+    // Fetch initial events from the instruction queue depending upon the width
+    int i = 1;
+    while(i <= width){
+        fetch(eventList, instructionQueue);
+        i++;
+    }
+    
+    return eventList;
+}
+
+void popEvent(EventList* eventList) {
     if (eventList == NULL || eventList->head == NULL) {
         return;
     }
@@ -34,8 +65,8 @@ void fetch(EventList* eventList, InstructionQueue* queue) {
     if (eventList == NULL || queue == NULL) {
         return;
     }
-    while (size(eventList) < queue->front->instr.num_dependents) {
-        Instruction instr = getFront(queue).instr;
+    while (size(eventList) <= (int)(queue->front->instr.num_dependents)) {
+        Instruction instr = getFront(queue);
         Event event = newEvent(IF, instr);
         EventListNode* newNode = malloc(sizeof(EventListNode));
         if (newNode == NULL) {
@@ -67,7 +98,7 @@ void processIF(DependencyTracker* dependencyTracker, int width, EventList* event
             // need to process the instruction in the IF stage
             // then we will update dependency tracker, if needed
             // then we will move the instruction to the next stage in the pipeline
-            pop(eventList);
+            popEvent(eventList);
             count++;
         } else {
             break; // No more instructions in IF stage or pipeline width limit reached
@@ -86,7 +117,7 @@ void processID(DependencyTracker* dependencyTracker, int width, EventList* event
             // need to process the instruction in the ID stage
             // then we will update dependency tracker, if needed
             // then we will move the instruction to the next stage in the pipeline
-            pop(eventList);
+            popEvent(eventList);
             count++;
         } else {
             break; // No more instructions in ID stage or pipeline width limit reached
@@ -103,7 +134,7 @@ void processEX(DependencyTracker* dependencyTracker, int width, EventList* event
         Event event = front(eventList);
         if (event.stage == EX) {
             // .......
-            pop(eventList);
+            popEvent(eventList);
             count++;
         } else {
             break; // No more instructions in EX stage or pipeline width limit reached
@@ -120,7 +151,7 @@ void processMEM(DependencyTracker* dependencyTracker, int width, EventList* even
         Event event = front(eventList);
         if (event.stage == MEM) {
             // .......
-            pop(eventList);
+            popEvent(eventList);
             count++;
         } else {
             break; // No more instructions in MEM stage or pipeline width limit reached
@@ -137,7 +168,7 @@ void processWB(DependencyTracker* dependencyTracker, int width, EventList* event
         Event event = front(eventList);
         if (event.stage == WB) {
             // .......
-            pop(eventList);
+            popEvent(eventList);
             count++;
         } else {
             break; // No more instructions in WB stage or pipeline width limit reached

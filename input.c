@@ -1,4 +1,4 @@
-#include "inputqueue.h"
+#include "input.h"
 
 // Function to initialize a queue
 InstructionQueue* initQueue() {
@@ -50,35 +50,45 @@ void populateQueue(InstructionQueue* queue, const char* fileName, int startLine,
         if (currentLine >= startLine) {
             char pc[10]; // Assuming PC is a hexadecimal value and at most 10 characters
             int type;
-            char deps[256]; // Assuming dependency list can be at most 256 characters
-
+            char deps[256] = ""; // Assuming dependency list can be at most 256 characters
+        
             // Parse instruction details from the buffer
-            if (sscanf(buffer, "%9[^,],%d,%255[^\n]", pc, &type, deps) == 3) {
+            if (sscanf(buffer, "%9[^,],%d,%255[^\n]", pc, &type, deps)  >= 2) {
                 // Create Instruction object
                 Instruction instr;
                 instr.programCounter = strdup(pc);
                 instr.type = (instrType)type;
+                instr.num_dependents = 0;
+                instr.dependents = NULL;
+                // If there are dependencies, parse them
+                if (strlen(deps) > 0) {
+                   // Create a copy of the dependency string to tokenize
+                    char deps_copy[256];
+                    strcpy(deps_copy, deps);
+                    
+                    // Count the number of dependencies
+                    int num_deps = 0;
+                    char* token = strtok(deps_copy, ",");
+                    while (token != NULL) {
+                        num_deps++;
+                        token = strtok(NULL, ",");
+                    }
+                    // Allocate memory for dependencies
+                    instr.dependents = (char**)malloc(num_deps * sizeof(char*));
+                    instr.num_dependents = num_deps;
 
-                // Count the number of dependencies
-                int num_deps = 0;
-                char* token = strtok(deps, ",");
-                while (token != NULL) {
-                    num_deps++;
-                    token = strtok(NULL, ",");
+                    // Parse dependencies and copy into the instruction object
+                    token = strtok(deps, ",");
+                    int i = 0;
+                    while (token != NULL) {
+                        instr.dependents[i++] = strdup(token);
+                        token = strtok(NULL, ",");
+                    } }
+                else {
+                    // Add an empty string to dependents if no dependencies are present
+                    instr.num_dependents = 0;
+                    instr.dependents = NULL;
                 }
-
-                // Allocate memory for dependencies
-                instr.dependents = (char**)malloc(num_deps * sizeof(char*));
-                instr.num_dependents = num_deps;
-
-                // Parse dependencies and copy into the instruction object
-                token = strtok(deps, ",");
-                int i = 0;
-                while (token != NULL) {
-                    instr.dependents[i++] = strdup(token);
-                    token = strtok(NULL, ",");
-                }
-
                 // Push the instruction into the queue
                 push(queue, instr);
                 instrCount--;
@@ -86,6 +96,7 @@ void populateQueue(InstructionQueue* queue, const char* fileName, int startLine,
                 fprintf(stderr, "Error parsing instruction at line %d\n", currentLine);
             }
         }
+        memset(buffer, 0, sizeof(buffer));
         currentLine++;
     }
     fclose(file);

@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "simulator.c"
+#include "simulator.h"
 
 int main(int argc, char *argv[]) {
     if (argc < 5) {
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     }
 
     start(simulator);
-    freeSimulator(simulator);
+    //freeSimulator(simulator);
 
     return 0;
 }

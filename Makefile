@@ -1,15 +1,22 @@
+
 CC = gcc
-CCFLAGS = -g -std=c11 -Wall -Werror
-LDLIBS = -1m
-OBJFILES = $(patsubst %.c, %.o, $(wildcard *.c))
-TARGET = proj
+CFLAGS = -Wall -Wextra -g
+
+SRCS = main.c simulator.c input.c instruction.c dependencytracker.c eventlist.c
+OBJS = $(SRCS:.c=.o)
+DEPS = input.h simulator.h instruction.h dependencytracker.h eventlist.h
+
+TARGET = simulator
+
+.PHONY: all clean
 
 all: $(TARGET)
 
-$(TARGET): $(OBJFILES)
-	$(CC) -o $(TARGET) $(OBJFILES) $(CCFLAGS) $(LDLIBS)
-	rm -f *.o
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
 
-clean: 
-	rm -f *.o $(TARGET)
+%.o: %.c $(DEPS)
+	$(CC) $(CFLAGS) -c $< -o $@
 
+clean:
+	rm -f $(OBJS) $(TARGET)

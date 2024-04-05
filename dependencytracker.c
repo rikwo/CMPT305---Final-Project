@@ -1,26 +1,4 @@
-#ifndef DEPENDENCYTRACKER_H
-#define DEPENDENCYTRACKER_H
-
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
-#include <malloc.h>
-
-typedef struct {
-    unsigned first;
-    bool second;
-} Pair;
-
-typedef struct {
-    Pair pair;
-    struct DequeNode* next;
-} DequeNode;
-
-typedef struct {
-    DequeNode* front;
-    DequeNode* rear;
-} Deque;
+#include "dependencytracker.h"
 
 Deque* initDeque() {
     Deque* deque = (Deque*)malloc(sizeof(Deque));
@@ -59,17 +37,6 @@ void popFront(Deque* deque) {
     }
     free(temp);
 }
-
-typedef struct HashNode {
-    char* key;
-    Deque* value;
-    struct HashNode* next;
-} HashNode;
-
-typedef struct {
-    size_t size;
-    HashNode** array;
-} HashMap;
 
 HashMap* initHashMap(size_t size) {
     HashMap* map = (HashMap*)malloc(sizeof(HashMap));
@@ -125,15 +92,6 @@ Deque* get(HashMap* map, const char* key) {
     return NULL;
 }
 
-typedef struct {
-    unsigned stageCount[5];
-    unsigned nextInstr[5];
-    unsigned hazards[5];
-
-    //need some sort of structure to keep track of whether an instruction is completed and can be used by it's dependents
-    HashMap* instructions;
-} DependencyTracker;
-
 DependencyTracker* newDependencyTracker() {
     DependencyTracker* dependencyTracker = (DependencyTracker*)malloc(sizeof(DependencyTracker));
     if (dependencyTracker == NULL) {
@@ -172,4 +130,3 @@ void freeDependecyTracker(DependencyTracker* dependencyTracker) {
     free(dependencyTracker->instructions);
     free(dependencyTracker);
 }
-#endif

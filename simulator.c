@@ -5,19 +5,11 @@
 #include <time.h>
 
 #include "input.h"
-#include "dependency.h"
+#include "instruction.h"
+#include "simulator.h"
+#include "dependencytracker.h"
 #include "eventlist.h"
 
-typedef struct {
-    const char* fileName; //name of the trace file
-    int startLine; //first line that will be read 
-    int expectedInstructionCount; //number of instructions from the file to read
-    int width; //number of pipelines in the processor
-    unsigned instructionsExecuted; //total number of instructions executed
-    unsigned clockCycle; //current clock cycle
-    unsigned instructionCount[5]; //count of instructions of each type 
-    double time; //total time elapsed
-} Simulator;
 
 Simulator* newSimulator(const char* fileName, int startLine, int expectedInstructionCount, int width) {
     Simulator* simulator = (Simulator*)malloc(sizeof(Simulator));
@@ -76,41 +68,59 @@ void start(Simulator* simulator) {
 
     InstructionQueue *instructionQueue = initQueue();
     populateQueue(instructionQueue, simulator->fileName, simulator->startLine, simulator->expectedInstructionCount);
+    // Print all instructions in the queue
+    /*printf("Instructions in the queue:\n");
+    QueueNode* current = instructionQueue->front;
+    while (current != NULL) {
+        printf("PC: %s, Type: %d, Number of Dependents: %zu, Dependencies: ", 
+            current->instr.programCounter, 
+            current->instr.type, 
+            current->instr.num_dependents);
+        for (size_t i = 0; i < current->instr.num_dependents; i++) {
+            printf("%s", current->instr.dependents[i]);
+            if (i < current->instr.num_dependents - 1) {
+                printf(", ");
+            }
+        }
+        printf("\n");
+        current = current->next;
+    }*/
+
     DependencyTracker *dependencyTracker = newDependencyTracker();
     EventList *eventList = initEventList(dependencyTracker, instructionQueue, simulator->width);
     
     //as long as there are events and the instructions remaining, continue
-    while (eventList->size > 0 || (instructionQueue->front != NULL && instructionQueue->rear != NULL)) {
+   /* while (eventList->size > 0 || (instructionQueue->front != NULL && instructionQueue->rear != NULL)) {
         unsigned instructionCount = eventList->size;
-        for (int i = 0; i < instructionCount; i++) {
+        for (unsigned int i = 0; i < instructionCount; i++) {
             Event current = front(eventList);
-
             switch (current.stage) {
                 case IF:
-                    processIF(eventList);
+                    processIF(dependencyTracker, simulator->width, eventList);
                     break;
                 case ID:
-                    processID(eventList);
+                    processID(dependencyTracker, simulator->width, eventList);
                     break;
                 case EX:
-                    processEX(eventList);
+                    processEX(dependencyTracker, simulator->width, eventList);
                     break;
                 case MEM:
-                    processMEM(eventList);
+                    processMEM(dependencyTracker, simulator->width, eventList);
+                    break;
                 case WB:
-                    processWB(eventList);
+                    processWB(dependencyTracker, simulator->width, eventList);
 
-                    instructionCount[current.instr.type - 1]++;
+                    simulator->instructionCount[current.instr.type - 1]++;
                     simulator->instructionsExecuted++;
                     break;
 
             }
-            pop(eventList);
+            popEvent(eventList);
         }
         fetch(eventList, instructionQueue);
         simulator->clockCycle++;
-    }
+    }*/
     clock_t endTime = clock();
     simulator->time = (double)(endTime - startTime)/ CLOCKS_PER_SEC;
-    print(simulator);
+    //print(simulator);
 }
